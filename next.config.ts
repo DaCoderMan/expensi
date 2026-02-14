@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   experimental: {
     webpackBuildWorker: false,
   },
-  serverExternalPackages: ['pdf-parse'],
+  serverExternalPackages: ['unpdf'],
 };
 
 export default nextConfig;
