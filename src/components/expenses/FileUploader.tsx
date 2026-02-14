@@ -206,8 +206,8 @@ export default function FileUploader() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
               {currentFileType && (
                 <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-xs font-bold text-muted uppercase">
                   {FORMAT_ICONS[currentFileType]}
@@ -220,13 +220,13 @@ export default function FileUploader() {
                 <span className="text-xs text-warning">{parseErrors.length} skipped</span>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {!isImported && (
                 <>
                   <button
                     onClick={handleCategorize}
                     disabled={isCategorizing}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-sm font-medium hover:bg-purple-100 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary-light text-primary border border-teal-200 rounded-xl text-sm font-medium hover:bg-teal-100 disabled:opacity-50 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />

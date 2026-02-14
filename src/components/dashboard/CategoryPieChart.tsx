@@ -19,16 +19,16 @@ export default function CategoryPieChart() {
   return (
     <div>
       <h3 className="text-sm font-semibold text-foreground mb-4">Spending by Category</h3>
-      <div className="flex items-center gap-4">
-        <div className="w-48 h-48 shrink-0">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="w-40 h-40 sm:w-48 sm:h-48 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={45}
-                outerRadius={75}
+                innerRadius={40}
+                outerRadius={68}
                 paddingAngle={3}
                 dataKey="value"
                 strokeWidth={0}
@@ -41,22 +41,22 @@ export default function CategoryPieChart() {
                 formatter={(value) => `$${Number(value).toFixed(2)}`}
                 contentStyle={{
                   borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                  border: '1px solid #e5e7eb',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08)',
                   fontSize: '13px',
                 }}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex-1 space-y-2 overflow-y-auto max-h-48">
+        <div className="w-full sm:flex-1 grid grid-cols-2 sm:grid-cols-1 gap-2 overflow-y-auto max-h-48">
           {data.slice(0, 6).map((item) => (
             <div key={item.name} className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                <span className="text-foreground truncate">{item.name}</span>
+                <span className="text-foreground truncate text-xs sm:text-sm">{item.name}</span>
               </div>
-              <span className="text-muted font-medium tabular-nums">{item.percentage}%</span>
+              <span className="text-muted font-medium tabular-nums ml-2">{item.percentage}%</span>
             </div>
           ))}
         </div>

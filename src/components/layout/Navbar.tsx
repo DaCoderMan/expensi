@@ -57,7 +57,7 @@ export default function Navbar() {
             </div>
             <span className="text-lg font-bold gradient-text">Expensi</span>
           </Link>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             {navLinks.map((link) => {
               const isActive =
                 link.href === '/'
@@ -67,7 +67,7 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
                     isActive
                       ? 'gradient-bg text-white shadow-sm'
                       : 'text-muted hover:text-foreground hover:bg-white/60'

@@ -1,32 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f0f4f8;
-  --foreground: #1a202c;
+  --background: #f8fafb;
+  --foreground: #111827;
   --card: #ffffff;
-  --card-hover: #f7fafc;
-  --border: #e2e8f0;
-  --border-light: #edf2f7;
-  --muted: #718096;
-  --muted-light: #a0aec0;
-  --primary: #5046e5;
-  --primary-hover: #4338ca;
-  --primary-light: #eef2ff;
-  --primary-muted: #818cf8;
+  --card-hover: #f9fafb;
+  --border: #e5e7eb;
+  --border-light: #f3f4f6;
+  --muted: #6b7280;
+  --muted-light: #9ca3af;
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
+  --primary-light: #f0fdfa;
+  --primary-muted: #5eead4;
   --danger: #ef4444;
   --danger-light: #fef2f2;
   --success: #10b981;
   --success-light: #ecfdf5;
   --warning: #f59e0b;
   --warning-light: #fffbeb;
-  --accent: #06b6d4;
-  --accent-light: #ecfeff;
-  --gradient-start: #5046e5;
-  --gradient-end: #7c3aed;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --accent: #3b82f6;
+  --accent-light: #eff6ff;
+  --gradient-start: #0d9488;
+  --gradient-end: #0891b2;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
 }
 
 @theme inline {
@@ -56,7 +56,7 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e0 transparent;
+  scrollbar-color: #d1d5db transparent;
 }
 
 body {
@@ -74,7 +74,7 @@ button, a, input, select, textarea {
 /* Custom focus ring */
 input:focus, select:focus, textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(80, 70, 229, 0.15);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
   border-color: var(--primary);
 }
 
@@ -94,13 +94,13 @@ input:focus, select:focus, textarea:focus {
 /* Subtle pattern background */
 .pattern-bg {
   background-color: var(--background);
-  background-image: radial-gradient(circle at 1px 1px, rgba(80, 70, 229, 0.03) 1px, transparent 0);
+  background-image: radial-gradient(circle at 1px 1px, rgba(13, 148, 136, 0.03) 1px, transparent 0);
   background-size: 24px 24px;
 }
 
 /* Glass morphism effect */
 .glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -138,4 +138,11 @@ input:focus, select:focus, textarea:focus {
 /* Table row hover transition */
 tr {
   transition: background-color 0.1s ease;
+}
+
+/* Responsive table scroll hint */
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
 }

@@ -22,11 +22,11 @@ export const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
   entertainment: '#22c55e',
   utilities: '#06b6d4',
   healthcare: '#3b82f6',
-  education: '#8b5cf6',
+  education: '#6366f1',
   shopping: '#ec4899',
   subscriptions: '#f43f5e',
   travel: '#14b8a6',
-  personal: '#a855f7',
+  personal: '#0ea5e9',
   other: '#6b7280',
 };
 

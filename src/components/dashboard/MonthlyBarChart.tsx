@@ -36,15 +36,15 @@ export default function MonthlyBarChart() {
               formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Spent']}
               contentStyle={{
                 borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08)',
                 fontSize: '13px',
               }}
             />
             <defs>
               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#5046e5" />
-                <stop offset="100%" stopColor="#7c3aed" />
+                <stop offset="0%" stopColor="#0d9488" />
+                <stop offset="100%" stopColor="#0891b2" />
               </linearGradient>
             </defs>
             <Bar dataKey="total" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
