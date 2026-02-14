@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   experimental: {
     webpackBuildWorker: false,
   },
-  serverExternalPackages: ['unpdf'],
+  serverExternalPackages: ['unpdf', 'mongoose'],
 };
 
 export default nextConfig;

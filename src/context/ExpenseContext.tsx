@@ -10,8 +10,8 @@ import {
   useCallback,
   useState,
 } from 'react';
+import { useSession } from 'next-auth/react';
 import { Expense, ExpenseCategory, ExpenseFilters } from '@/types';
-import { LOCAL_STORAGE_KEY } from '@/lib/constants';
 
 interface ExpenseState {
   expenses: Expense[];
@@ -64,49 +64,50 @@ interface ExpenseContextValue {
   filters: ExpenseFilters;
   isHydrated: boolean;
   totalSpending: number;
+  expenseCount: number;
   expensesByCategory: { category: ExpenseCategory; total: number; count: number }[];
   monthlyTotals: { month: string; total: number }[];
-  addExpense: (expense: Expense) => void;
-  addExpenses: (expenses: Expense[]) => void;
-  updateExpense: (expense: Expense) => void;
-  deleteExpense: (id: string) => void;
+  addExpense: (expense: Omit<Expense, 'id' | 'userId'>) => Promise<void>;
+  addExpenses: (expenses: Omit<Expense, 'id' | 'userId'>[]) => Promise<void>;
+  updateExpense: (expense: Expense) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
+  clearAllExpenses: () => Promise<void>;
   setFilters: (filters: Partial<ExpenseFilters>) => void;
 }
 
 const ExpenseContext = createContext<ExpenseContextValue | null>(null);
 
 export function ExpenseProvider({ children }: { children: ReactNode }) {
+  const { data: session, status } = useSession();
   const [state, dispatch] = useReducer(expenseReducer, {
     expenses: [],
     filters: initialFilters,
   });
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from localStorage on mount
+  // Fetch expenses from API when authenticated
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          dispatch({ type: 'SET_EXPENSES', payload: parsed });
-        }
-      }
-    } catch (error) {
-      console.error('Error loading expenses from localStorage:', error);
+    if (status === 'loading') return;
+    if (!session?.user?.id) {
+      setIsHydrated(true);
+      return;
     }
-    setIsHydrated(true);
-  }, []);
 
-  // Save to localStorage when expenses change (after hydration)
-  useEffect(() => {
-    if (!isHydrated) return;
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state.expenses));
-    } catch (error) {
-      console.error('Error saving expenses to localStorage:', error);
+    async function fetchExpenses() {
+      try {
+        const res = await fetch('/api/expenses');
+        if (res.ok) {
+          const data = await res.json();
+          dispatch({ type: 'SET_EXPENSES', payload: data.expenses || [] });
+        }
+      } catch (error) {
+        console.error('Error fetching expenses:', error);
+      }
+      setIsHydrated(true);
     }
-  }, [state.expenses, isHydrated]);
+
+    fetchExpenses();
+  }, [session?.user?.id, status]);
 
   const filteredExpenses = useMemo(() => {
     let filtered = [...state.expenses];
@@ -171,20 +172,84 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       .sort((a, b) => a.month.localeCompare(b.month));
   }, [state.expenses]);
 
-  const addExpense = useCallback((expense: Expense) => {
-    dispatch({ type: 'ADD_EXPENSE', payload: expense });
+  const addExpense = useCallback(async (expense: Omit<Expense, 'id' | 'userId'>) => {
+    try {
+      const res = await fetch('/api/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(expense),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to add expense');
+      }
+      const data = await res.json();
+      if (data.expenses?.[0]) {
+        dispatch({ type: 'ADD_EXPENSE', payload: data.expenses[0] });
+      }
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      throw error;
+    }
   }, []);
 
-  const addExpenses = useCallback((expenses: Expense[]) => {
-    dispatch({ type: 'ADD_EXPENSES', payload: expenses });
+  const addExpenses = useCallback(async (expenses: Omit<Expense, 'id' | 'userId'>[]) => {
+    try {
+      const res = await fetch('/api/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expenses }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to add expenses');
+      }
+      const data = await res.json();
+      if (data.expenses?.length) {
+        dispatch({ type: 'ADD_EXPENSES', payload: data.expenses });
+      }
+    } catch (error) {
+      console.error('Error adding expenses:', error);
+      throw error;
+    }
   }, []);
 
-  const updateExpense = useCallback((expense: Expense) => {
-    dispatch({ type: 'UPDATE_EXPENSE', payload: expense });
+  const updateExpense = useCallback(async (expense: Expense) => {
+    try {
+      const res = await fetch(`/api/expenses/${expense.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(expense),
+      });
+      if (!res.ok) throw new Error('Failed to update expense');
+      const data = await res.json();
+      dispatch({ type: 'UPDATE_EXPENSE', payload: data.expense });
+    } catch (error) {
+      console.error('Error updating expense:', error);
+      throw error;
+    }
   }, []);
 
-  const deleteExpense = useCallback((id: string) => {
-    dispatch({ type: 'DELETE_EXPENSE', payload: id });
+  const deleteExpense = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete expense');
+      dispatch({ type: 'DELETE_EXPENSE', payload: id });
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      throw error;
+    }
+  }, []);
+
+  const clearAllExpenses = useCallback(async () => {
+    try {
+      const res = await fetch('/api/expenses/clear', { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to clear expenses');
+      dispatch({ type: 'SET_EXPENSES', payload: [] });
+    } catch (error) {
+      console.error('Error clearing expenses:', error);
+      throw error;
+    }
   }, []);
 
   const setFilters = useCallback((filters: Partial<ExpenseFilters>) => {
@@ -197,12 +262,14 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     filters: state.filters,
     isHydrated,
     totalSpending,
+    expenseCount: state.expenses.length,
     expensesByCategory,
     monthlyTotals,
     addExpense,
     addExpenses,
     updateExpense,
     deleteExpense,
+    clearAllExpenses,
     setFilters,
   };
 

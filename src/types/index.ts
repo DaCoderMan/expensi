@@ -12,17 +12,65 @@ export type ExpenseCategory =
   | 'personal'
   | 'other';
 
+export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD' | 'JPY' | 'INR' | 'BRL' | 'MXN' | 'NGN';
+
 export interface Expense {
   id: string;
+  userId: string;
   description: string;
   amount: number;
   date: string;
   category: ExpenseCategory;
+  currency: CurrencyCode;
   isAutoCategorized: boolean;
   source: 'manual' | 'csv' | 'excel' | 'pdf' | 'json' | 'ofx';
   notes?: string;
   createdAt: string;
+  /** If recurring, the ID of the recurring rule that created this */
+  recurringRuleId?: string;
 }
+
+export interface ExpensePreset {
+  id: string;
+  name: string;
+  description: string;
+  amount: number;
+  category: ExpenseCategory;
+  currency: CurrencyCode;
+  notes?: string;
+}
+
+export type RecurringFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
+
+export interface RecurringExpense {
+  id: string;
+  userId: string;
+  name: string;
+  description: string;
+  amount: number;
+  category: ExpenseCategory;
+  currency: CurrencyCode;
+  frequency: RecurringFrequency;
+  startDate: string;
+  endDate?: string;
+  nextDue: string;
+  isActive: boolean;
+  notes?: string;
+  createdAt: string;
+}
+
+export type SubscriptionTier = 'free' | 'premium';
+
+export interface UserSubscription {
+  tier: SubscriptionTier;
+  paypalSubscriptionId?: string;
+  paypalPayerId?: string;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+  cancelledAt?: string;
+}
+
+export const FREE_TIER_LIMIT = 50;
 
 export interface RawExpenseInput {
   description: string;

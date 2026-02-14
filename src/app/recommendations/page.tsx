@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Recommendation } from '@/types';
 import Card from '@/components/ui/Card';
 import EmptyState from '@/components/ui/EmptyState';
 import CategoryBadge from '@/components/expenses/CategoryBadge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import UpgradePrompt from '@/components/ui/UpgradePrompt';
 import Link from 'next/link';
 
 const PRIORITY_STYLES = {
@@ -35,6 +37,7 @@ const PRIORITY_ICONS = {
 
 export default function RecommendationsPage() {
   const { expenses, isHydrated } = useExpenses();
+  const { isFree } = useSubscription();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +90,24 @@ export default function RecommendationsPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Feature gate: AI Insights is premium only
+  if (isFree) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">AI Insights</h1>
+          <p className="text-sm text-muted mt-1">Get personalized spending recommendations</p>
+        </div>
+        <Card>
+          <UpgradePrompt
+            feature="AI Insights"
+            description="Get personalized spending recommendations, savings opportunities, and smart financial tips powered by AI."
+          />
+        </Card>
       </div>
     );
   }

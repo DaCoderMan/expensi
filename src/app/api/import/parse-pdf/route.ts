@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { extractText } from 'unpdf';
 import { deepseek } from '@/lib/deepseek';
 import { buildPdfExtractionPrompt } from '@/lib/prompts';
@@ -6,6 +7,11 @@ import { RawExpenseInput } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!process.env.DEEPSEEK_API_KEY) {
       return NextResponse.json(
         { error: 'DeepSeek API key not configured. PDF parsing requires AI to extract expenses.' },
@@ -28,7 +34,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'PDF too large. Maximum file size is 20MB.' }, { status: 400 });
     }
 
-    // Extract text from PDF using unpdf (serverless-compatible)
     const arrayBuffer = await file.arrayBuffer();
     const pdfData = new Uint8Array(arrayBuffer);
     const { text: pdfText } = await extractText(pdfData, { mergePages: true });
@@ -40,10 +45,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Truncate to stay within token limits (~8000 chars)
     const truncatedText = pdfText.slice(0, 8000);
-
-    // Send to DeepSeek AI to structure the text into expenses
     const { system, user } = buildPdfExtractionPrompt(truncatedText);
 
     const completion = await deepseek.chat.completions.create({

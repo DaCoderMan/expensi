@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { deepseek } from '@/lib/deepseek';
 import { buildRecommendationsPrompt } from '@/lib/prompts';
 import { Expense, ExpenseCategory, SpendingSummary } from '@/types';
@@ -7,14 +8,12 @@ function buildSummary(expenses: Expense[], period: string): SpendingSummary {
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const transactionCount = expenses.length;
 
-  // Calculate date range for average daily spend
   const dates = expenses.map((e) => new Date(e.date).getTime());
   const minDate = Math.min(...dates);
   const maxDate = Math.max(...dates);
   const days = Math.max(1, Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)));
   const avgDaily = total / days;
 
-  // Group by category
   const catMap = new Map<ExpenseCategory, { total: number; count: number }>();
   for (const e of expenses) {
     const existing = catMap.get(e.category) || { total: 0, count: 0 };
@@ -32,7 +31,6 @@ function buildSummary(expenses: Expense[], period: string): SpendingSummary {
     }))
     .sort((a, b) => b.total - a.total);
 
-  // Top 3 expenses
   const topExpenses = [...expenses]
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 3)
@@ -47,6 +45,11 @@ function buildSummary(expenses: Expense[], period: string): SpendingSummary {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!process.env.DEEPSEEK_API_KEY) {
       return NextResponse.json(
         { error: 'DeepSeek API key not configured. Add DEEPSEEK_API_KEY to .env.local' },

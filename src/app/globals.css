@@ -29,6 +29,36 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
 }
 
+/* Dark Mode */
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card: #1e293b;
+  --card-hover: #334155;
+  --border: #334155;
+  --border-light: #1e293b;
+  --muted: #94a3b8;
+  --muted-light: #64748b;
+  --primary: #2dd4bf;
+  --primary-hover: #14b8a6;
+  --primary-light: rgba(45, 212, 191, 0.1);
+  --primary-muted: #5eead4;
+  --danger: #f87171;
+  --danger-light: rgba(248, 113, 113, 0.1);
+  --success: #34d399;
+  --success-light: rgba(52, 211, 153, 0.1);
+  --warning: #fbbf24;
+  --warning-light: rgba(251, 191, 36, 0.1);
+  --accent: #60a5fa;
+  --accent-light: rgba(96, 165, 250, 0.1);
+  --gradient-start: #14b8a6;
+  --gradient-end: #06b6d4;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -59,6 +89,10 @@
   scrollbar-color: #d1d5db transparent;
 }
 
+.dark * {
+  scrollbar-color: #475569 transparent;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -76,6 +110,17 @@ input:focus, select:focus, textarea:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
   border-color: var(--primary);
+}
+
+.dark input:focus, .dark select:focus, .dark textarea:focus {
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2);
+}
+
+/* Dark mode form elements */
+.dark input, .dark select, .dark textarea {
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
 }
 
 /* Gradient text utility */
@@ -98,11 +143,19 @@ input:focus, select:focus, textarea:focus {
   background-size: 24px 24px;
 }
 
+.dark .pattern-bg {
+  background-image: radial-gradient(circle at 1px 1px, rgba(45, 212, 191, 0.03) 1px, transparent 0);
+}
+
 /* Glass morphism effect */
 .glass {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass {
+  background: rgba(30, 41, 59, 0.85);
 }
 
 /* Animated pulse for loading states */
@@ -138,6 +191,20 @@ input:focus, select:focus, textarea:focus {
 /* Table row hover transition */
 tr {
   transition: background-color 0.1s ease;
+}
+
+/* Dark mode table */
+.dark table {
+  color: var(--foreground);
+}
+
+.dark thead {
+  background-color: var(--card);
+}
+
+/* Theme transition */
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Responsive table scroll hint */

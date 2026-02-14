@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { parseFile, detectFileType, ACCEPTED_FILE_INPUT, getFileTypeLabel } from '@/lib/parsers';
-import { RawExpenseInput, Expense, ExpenseCategory, ImportFileType } from '@/types';
+import { RawExpenseInput, ExpenseCategory, ImportFileType } from '@/types';
 import { useExpenses } from '@/context/ExpenseContext';
 import { CATEGORY_LABELS } from '@/lib/constants';
 import CategoryBadge from './CategoryBadge';
@@ -34,6 +34,7 @@ export default function FileUploader() {
   const [parseErrors, setParseErrors] = useState<{ row: number; message: string }[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [isCategorizing, setIsCategorizing] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [isImported, setIsImported] = useState(false);
   const [currentFileType, setCurrentFileType] = useState<ImportFileType | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -118,22 +119,31 @@ export default function FileUploader() {
     setIsCategorizing(false);
   }
 
-  function handleImport() {
-    const expenses: Expense[] = parsedRows.map((row) => ({
-      id: crypto.randomUUID(),
-      description: row.description,
-      amount: row.amount,
-      date: row.date,
-      category: (row.aiCategory || row.category || 'other') as ExpenseCategory,
-      isAutoCategorized: !!row.aiCategory,
-      source: currentFileType || 'csv',
-      notes: row.notes,
-      createdAt: new Date().toISOString(),
-    }));
+  async function handleImport() {
+    setIsImporting(true);
+    setMessage(null);
 
-    addExpenses(expenses);
-    setIsImported(true);
-    setMessage({ type: 'success', text: `Successfully imported ${expenses.length} expenses!` });
+    try {
+      const expenses = parsedRows.map((row) => ({
+        description: row.description,
+        amount: row.amount,
+        date: row.date,
+        category: (row.aiCategory || row.category || 'other') as ExpenseCategory,
+        currency: 'USD' as const,
+        isAutoCategorized: !!row.aiCategory,
+        source: currentFileType || ('csv' as const),
+        notes: row.notes,
+        createdAt: new Date().toISOString(),
+      }));
+
+      await addExpenses(expenses);
+      setIsImported(true);
+      setMessage({ type: 'success', text: `Successfully imported ${expenses.length} expenses!` });
+    } catch (error) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to import expenses.' });
+    }
+
+    setIsImporting(false);
   }
 
   function handleReset() {
@@ -141,6 +151,7 @@ export default function FileUploader() {
     setParseErrors([]);
     setIsImported(false);
     setIsParsing(false);
+    setIsImporting(false);
     setCurrentFileType(null);
     setMessage(null);
   }
@@ -225,7 +236,7 @@ export default function FileUploader() {
                 <>
                   <button
                     onClick={handleCategorize}
-                    disabled={isCategorizing}
+                    disabled={isCategorizing || isImporting}
                     className="flex items-center gap-2 px-4 py-2 bg-primary-light text-primary border border-teal-200 rounded-xl text-sm font-medium hover:bg-teal-100 disabled:opacity-50 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -235,9 +246,10 @@ export default function FileUploader() {
                   </button>
                   <button
                     onClick={handleImport}
-                    className="px-4 py-2 gradient-bg text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
+                    disabled={isImporting || isCategorizing}
+                    className="px-4 py-2 gradient-bg text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm"
                   >
-                    Import All
+                    {isImporting ? 'Importing...' : 'Import All'}
                   </button>
                 </>
               )}

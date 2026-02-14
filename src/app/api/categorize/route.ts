@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { deepseek } from '@/lib/deepseek';
 import { buildCategorizationPrompt } from '@/lib/prompts';
 import { CATEGORIES } from '@/lib/constants';
@@ -6,6 +7,11 @@ import { ExpenseCategory } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!process.env.DEEPSEEK_API_KEY) {
       return NextResponse.json(
         { error: 'DeepSeek API key not configured. Add DEEPSEEK_API_KEY to .env.local' },
