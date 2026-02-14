@@ -1,5 +1,30 @@
 import { SpendingSummary } from '@/types';
 
+export function buildPdfExtractionPrompt(pdfText: string) {
+  const system = `You are a financial document parser. Extract expense/transaction data from the provided text extracted from a PDF (bank statement, credit card statement, or expense report).
+
+Return valid JSON only:
+{
+  "expenses": [
+    { "description": "Merchant or description", "amount": 42.50, "date": "2026-01-15", "category": "food" }
+  ]
+}
+
+Rules:
+- Extract every expense transaction you can identify
+- "amount" must be a positive number (no currency symbols, no commas)
+- "date" must be in YYYY-MM-DD format. If the year is ambiguous, use the current year
+- "description" should be the merchant name or clean transaction description (remove bank codes, reference numbers)
+- "category" is optional. If you can infer it, use one of: food, transport, housing, entertainment, utilities, healthcare, education, shopping, subscriptions, travel, personal, other
+- Only extract debits/charges/expenses - skip deposits, credits, payments received, balance summaries, interest earned
+- If the text is not a financial document or contains no transactions, return { "expenses": [] }
+- Do NOT make up or hallucinate transactions - only extract what is clearly present in the text`;
+
+  const user = `Extract all expense transactions from this document text:\n\n${pdfText}`;
+
+  return { system, user };
+}
+
 export function buildCategorizationPrompt(
   expenses: { description: string; amount: number }[]
 ) {

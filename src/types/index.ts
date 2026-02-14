@@ -19,7 +19,7 @@ export interface Expense {
   date: string;
   category: ExpenseCategory;
   isAutoCategorized: boolean;
-  source: 'manual' | 'csv';
+  source: 'manual' | 'csv' | 'excel' | 'pdf' | 'json' | 'ofx';
   notes?: string;
   createdAt: string;
 }
@@ -60,6 +60,15 @@ export interface ExpenseFilters {
   searchQuery?: string;
   sortBy: 'date' | 'amount' | 'category';
   sortOrder: 'asc' | 'desc';
+}
+
+export type ImportFileType = 'csv' | 'excel' | 'pdf' | 'json' | 'ofx';
+
+export interface ParseResult {
+  expenses: RawExpenseInput[];
+  errors: { row: number; message: string }[];
+  totalRows: number;
+  fileType: ImportFileType;
 }
 
 export interface SpendingSummary {

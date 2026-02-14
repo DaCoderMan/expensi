@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   experimental: {
     webpackBuildWorker: false,
   },
+  serverExternalPackages: ['pdf-parse'],
 };
 
 export default nextConfig;

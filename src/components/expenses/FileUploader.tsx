@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { parseCsvFile } from '@/lib/csv-parser';
-import { RawExpenseInput, Expense, ExpenseCategory } from '@/types';
+import { parseFile, detectFileType, ACCEPTED_FILE_INPUT, getFileTypeLabel } from '@/lib/parsers';
+import { RawExpenseInput, Expense, ExpenseCategory, ImportFileType } from '@/types';
 import { useExpenses } from '@/context/ExpenseContext';
 import { CATEGORY_LABELS } from '@/lib/constants';
 import CategoryBadge from './CategoryBadge';
@@ -11,29 +11,63 @@ interface ParsedRow extends RawExpenseInput {
   aiCategory?: ExpenseCategory;
 }
 
-export default function CsvUploader() {
+const FORMAT_ICONS: Record<ImportFileType, string> = {
+  csv: 'CSV',
+  excel: 'XLS',
+  pdf: 'PDF',
+  json: 'JSON',
+  ofx: 'OFX',
+};
+
+const LOADING_MESSAGES: Record<ImportFileType, string> = {
+  csv: 'Parsing CSV...',
+  excel: 'Reading spreadsheet...',
+  pdf: 'Uploading PDF & extracting with AI...',
+  json: 'Parsing JSON...',
+  ofx: 'Parsing bank file...',
+};
+
+export default function FileUploader() {
   const { addExpenses } = useExpenses();
   const [dragActive, setDragActive] = useState(false);
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [parseErrors, setParseErrors] = useState<{ row: number; message: string }[]>([]);
+  const [isParsing, setIsParsing] = useState(false);
   const [isCategorizing, setIsCategorizing] = useState(false);
   const [isImported, setIsImported] = useState(false);
+  const [currentFileType, setCurrentFileType] = useState<ImportFileType | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleFile = useCallback(async (file: File) => {
-    if (!file.name.endsWith('.csv')) {
-      setMessage({ type: 'error', text: 'Please upload a CSV file.' });
+    const fileType = detectFileType(file);
+    if (!fileType) {
+      setMessage({ type: 'error', text: 'Unsupported file type. Accepted: CSV, Excel, PDF, JSON, OFX/QFX.' });
       return;
     }
+
     setMessage(null);
     setIsImported(false);
-    const result = await parseCsvFile(file);
-    setParsedRows(result.expenses);
-    setParseErrors(result.errors);
+    setIsParsing(true);
+    setCurrentFileType(fileType);
 
-    if (result.expenses.length === 0 && result.errors.length > 0) {
-      setMessage({ type: 'error', text: result.errors[0].message });
+    try {
+      const result = await parseFile(file);
+      setParsedRows(result.expenses);
+      setParseErrors(result.errors);
+
+      if (result.expenses.length === 0 && result.errors.length > 0) {
+        setMessage({ type: 'error', text: result.errors[0].message });
+      } else if (result.expenses.length > 0) {
+        setMessage({
+          type: 'success',
+          text: `Found ${result.expenses.length} expense${result.expenses.length !== 1 ? 's' : ''} in ${getFileTypeLabel(fileType)} file.`,
+        });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to parse file. Please try a different format.' });
     }
+
+    setIsParsing(false);
   }, []);
 
   function handleDrop(e: React.DragEvent) {
@@ -92,7 +126,7 @@ export default function CsvUploader() {
       date: row.date,
       category: (row.aiCategory || row.category || 'other') as ExpenseCategory,
       isAutoCategorized: !!row.aiCategory,
-      source: 'csv',
+      source: currentFileType || 'csv',
       notes: row.notes,
       createdAt: new Date().toISOString(),
     }));
@@ -106,6 +140,8 @@ export default function CsvUploader() {
     setParsedRows([]);
     setParseErrors([]);
     setIsImported(false);
+    setIsParsing(false);
+    setCurrentFileType(null);
     setMessage(null);
   }
 
@@ -118,12 +154,12 @@ export default function CsvUploader() {
           </svg>
         </div>
         <div>
-          <h3 className="text-base font-semibold text-foreground">Import from CSV</h3>
-          <p className="text-xs text-muted">Upload your bank statement or expense file</p>
+          <h3 className="text-base font-semibold text-foreground">Import from File</h3>
+          <p className="text-xs text-muted">CSV, Excel, PDF, JSON, or OFX/QFX bank files</p>
         </div>
       </div>
 
-      {parsedRows.length === 0 && !isImported ? (
+      {parsedRows.length === 0 && !isImported && !isParsing ? (
         <div
           onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
           onDragLeave={() => setDragActive(false)}
@@ -135,21 +171,50 @@ export default function CsvUploader() {
           <svg className="w-12 h-12 mx-auto text-muted-light mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
-          <p className="text-sm text-muted mb-3">Drag & drop your CSV file here, or</p>
+          <p className="text-sm text-muted mb-3">Drag & drop your file here, or</p>
           <label className="inline-block px-5 py-2.5 gradient-bg text-white rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90 transition-opacity shadow-sm">
             Browse Files
-            <input type="file" accept=".csv" onChange={handleFileInput} className="hidden" />
+            <input type="file" accept={ACCEPTED_FILE_INPUT} onChange={handleFileInput} className="hidden" />
           </label>
-          <p className="text-xs text-muted-light mt-4">
-            CSV should have columns for description and amount. Date and category are optional.
+          <div className="flex items-center justify-center gap-2 mt-5">
+            {(['csv', 'excel', 'pdf', 'json', 'ofx'] as ImportFileType[]).map((type) => (
+              <span
+                key={type}
+                className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-xs font-medium text-muted"
+              >
+                {FORMAT_ICONS[type]}
+              </span>
+            ))}
+          </div>
+          <p className="text-xs text-muted-light mt-3">
+            Bank statements, credit card exports, expense reports, and more
           </p>
+        </div>
+      ) : isParsing ? (
+        <div className="border-2 border-dashed border-primary/30 rounded-2xl p-10 text-center bg-primary-light/20">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm font-medium text-primary">
+              {currentFileType ? LOADING_MESSAGES[currentFileType] : 'Processing...'}
+            </span>
+          </div>
+          {currentFileType === 'pdf' && (
+            <p className="text-xs text-muted">
+              AI is reading your document. This may take a few seconds.
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
+              {currentFileType && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-xs font-bold text-muted uppercase">
+                  {FORMAT_ICONS[currentFileType]}
+                </span>
+              )}
               <span className="inline-flex items-center px-3 py-1 rounded-lg bg-primary-light text-primary text-sm font-medium">
-                {parsedRows.length} rows
+                {parsedRows.length} expense{parsedRows.length !== 1 ? 's' : ''}
               </span>
               {parseErrors.length > 0 && (
                 <span className="text-xs text-warning">{parseErrors.length} skipped</span>
