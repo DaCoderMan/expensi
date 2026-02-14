@@ -1,0 +1,21 @@
+date,description,amount,category
+2026-01-05,Grocery shopping at Walmart,85.50,food
+2026-01-07,Uber ride to work,15.00,transport
+2026-01-08,Netflix subscription,15.99,subscriptions
+2026-01-10,Electric bill payment,120.00,utilities
+2026-01-12,Lunch with colleagues,32.00,food
+2026-01-15,Monthly rent payment,1500.00,housing
+2026-01-16,Amazon headphones purchase,79.99,shopping
+2026-01-18,Doctor visit copay,40.00,healthcare
+2026-01-20,Gas station fill-up,55.00,transport
+2026-01-22,Online course - Python,49.99,education
+2026-01-25,Movie tickets,24.00,entertainment
+2026-01-27,Gym membership,35.00,personal
+2026-01-28,Coffee shop,6.50,food
+2026-02-01,Grocery shopping at Trader Joes,95.00,food
+2026-02-03,Spotify subscription,10.99,subscriptions
+2026-02-05,Flight tickets - vacation,350.00,travel
+2026-02-07,Water bill,45.00,utilities
+2026-02-10,Restaurant dinner,65.00,food
+2026-02-12,Uber rides weekly,42.00,transport
+2026-02-13,Phone case from Amazon,22.00,shopping
