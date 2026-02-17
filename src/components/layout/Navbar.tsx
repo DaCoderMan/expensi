@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '@/hooks/useTheme';
+import { isEffectivePremium } from '@/types';
 
 const navLinks = [
   {
@@ -71,7 +72,7 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isPremium = session?.user?.subscription?.tier === 'premium';
+  const isPremium = isEffectivePremium(session?.user?.subscription);
 
   return (
     <nav className="glass border-b border-border/50 sticky top-0 z-50">

@@ -7,6 +7,8 @@ const SubscriptionSchema = new Schema({
   currentPeriodStart: Date,
   currentPeriodEnd: Date,
   cancelledAt: Date,
+  /** End of 3-day free trial; user is treated as premium until this date */
+  trialEndsAt: Date,
 }, { _id: false });
 
 const UserSchema = new Schema({

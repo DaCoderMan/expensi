@@ -21,7 +21,7 @@ export default function UpgradePrompt({ feature, description }: UpgradePromptPro
         href="/pricing"
         className="px-6 py-2.5 gradient-bg text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-md"
       >
-        Upgrade to PRO — $3/month
+        Upgrade to PRO — $9.99/month
       </Link>
     </div>
   );

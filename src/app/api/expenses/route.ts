@@ -41,13 +41,15 @@ export async function POST(request: NextRequest) {
 
   await connectDB();
 
-  // Check free tier limit
+  // Check free tier limit (premium or within trial = unlimited)
   const user = await User.findById(session.user.id).lean();
-  const tier = (user && typeof user === 'object' && 'subscription' in user)
-    ? (user.subscription as { tier?: string })?.tier || 'free'
-    : 'free';
+  const sub = (user && typeof user === 'object' && 'subscription' in user)
+    ? (user.subscription as { tier?: string; trialEndsAt?: Date }) : null;
+  const tier = sub?.tier || 'free';
+  const inTrial = sub?.trialEndsAt && new Date(sub.trialEndsAt) > new Date();
+  const isFreeTier = tier === 'free' && !inTrial;
 
-  if (tier === 'free') {
+  if (isFreeTier) {
     const count = await Expense.countDocuments({ userId: session.user.id });
     const body = await request.json();
     const incoming = Array.isArray(body.expenses) ? body.expenses.length : 1;

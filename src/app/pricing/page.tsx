@@ -5,61 +5,70 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useState } from 'react';
 import Card from '@/components/ui/Card';
 
+const PAYPAL_PAYMENT_URL = 'https://www.paypal.com/ncp/payment/RL8WME7ZGW2LN';
+
 export default function PricingPage() {
   const { data: session } = useSession();
-  const { isPremium, isFree, usagePercent, expenseCount } = useSubscription();
-  const [isActivating, setIsActivating] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const { isPremium, isFree, isInTrial, trialExpired, trialEndsAt, usagePercent, expenseCount } = useSubscription();
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [devAction, setDevAction] = useState<'grant' | 'revoke' | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  const planId = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || '';
+  const isDev = process.env.NODE_ENV === 'development';
 
-  async function handleActivate(subscriptionId: string) {
-    setIsActivating(true);
-    setMessage(null);
-
-    try {
-      const res = await fetch('/api/subscription/activate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscriptionId }),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        setMessage({ type: 'success', text: 'Welcome to PRO! Refreshing...' });
-        setTimeout(() => window.location.reload(), 1500);
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to activate subscription.' });
-      }
-    } catch {
-      setMessage({ type: 'error', text: 'Failed to activate subscription.' });
-    }
-
-    setIsActivating(false);
-  }
-
-  async function handleCancel() {
-    if (!confirm('Are you sure you want to cancel your PRO subscription?')) return;
-
+  async function handleDowngrade() {
+    if (!confirm('Downgrade to Free? You will keep your data but lose PRO features.')) return;
     setIsCancelling(true);
     setMessage(null);
-
     try {
       const res = await fetch('/api/subscription/cancel', { method: 'POST' });
       const data = await res.json();
-
       if (data.success) {
-        setMessage({ type: 'success', text: 'Subscription cancelled. Refreshing...' });
+        setMessage({ type: 'success', text: 'Downgraded to Free. Refreshing...' });
         setTimeout(() => window.location.reload(), 1500);
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to cancel subscription.' });
+        setMessage({ type: 'error', text: data.error || 'Failed.' });
       }
     } catch {
-      setMessage({ type: 'error', text: 'Failed to cancel subscription.' });
+      setMessage({ type: 'error', text: 'Request failed.' });
     }
-
     setIsCancelling(false);
+  }
+
+  async function handleDevGrantPro() {
+    setDevAction('grant');
+    setMessage(null);
+    try {
+      const res = await fetch('/api/dev/grant-pro', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ type: 'success', text: 'PRO granted. Refreshing...' });
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Request failed' });
+    }
+    setDevAction(null);
+  }
+
+  async function handleDevRevokePro() {
+    setDevAction('revoke');
+    setMessage(null);
+    try {
+      const res = await fetch('/api/dev/revoke-pro', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ type: 'success', text: 'PRO revoked. Refreshing...' });
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Request failed' });
+    }
+    setDevAction(null);
   }
 
   const features = {
@@ -87,17 +96,50 @@ export default function PricingPage() {
         <p className="text-muted">Unlock the full power of AI-driven expense tracking</p>
       </div>
 
-      {/* Current Status */}
+      {trialExpired && (
+        <Card className="border-amber-300 bg-amber-100/80 dark:bg-amber-900/30 dark:border-amber-700 text-center">
+          <p className="text-sm text-foreground">
+            <span className="font-semibold text-amber-800 dark:text-amber-300">Your free trial has ended.</span>
+            {' '}Pay below to get PRO and keep unlimited expenses plus AI features.
+          </p>
+        </Card>
+      )}
+
       {session?.user && (
         <Card className="!p-4 text-center">
           <p className="text-sm text-muted">
             You are currently on the{' '}
             <span className={`font-bold ${isPremium ? 'text-amber-600' : 'text-foreground'}`}>
-              {isPremium ? 'PRO' : 'Free'}
+              {isInTrial ? 'Free trial' : isPremium ? 'PRO' : 'Free'}
             </span>{' '}
             plan
-            {isFree && ` (${expenseCount}/50 expenses used)`}
+            {isInTrial && trialEndsAt && (
+              <span className="text-amber-600 font-medium">
+                {' '}({Math.ceil((trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))} days left)
+              </span>
+            )}
+            {isFree && !isInTrial && ` (${expenseCount}/50 expenses used)`}
           </p>
+          {isDev && session?.user && (
+            <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-2 justify-center">
+              <button
+                type="button"
+                onClick={handleDevGrantPro}
+                disabled={devAction !== null}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50"
+              >
+                {devAction === 'grant' ? '…' : 'Dev: Grant PRO'}
+              </button>
+              <button
+                type="button"
+                onClick={handleDevRevokePro}
+                disabled={devAction !== null}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+              >
+                {devAction === 'revoke' ? '…' : 'Dev: Revoke PRO'}
+              </button>
+            </div>
+          )}
           {isFree && (
             <div className="mt-2 w-full max-w-xs mx-auto bg-gray-200 rounded-full h-2">
               <div
@@ -110,7 +152,6 @@ export default function PricingPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        {/* Free Plan */}
         <Card className={`relative ${isFree ? 'ring-2 ring-primary' : ''}`}>
           <div className="p-2">
             {isFree && (
@@ -141,7 +182,6 @@ export default function PricingPage() {
           </div>
         </Card>
 
-        {/* PRO Plan */}
         <Card className={`relative ${isPremium ? 'ring-2 ring-amber-400' : 'ring-2 ring-primary'}`}>
           <div className="p-2">
             {isPremium && (
@@ -156,7 +196,7 @@ export default function PricingPage() {
             )}
             <h2 className="text-xl font-bold text-foreground mb-1">PRO</h2>
             <div className="flex items-baseline gap-1 mb-4">
-              <span className="text-3xl font-bold text-foreground">$3</span>
+              <span className="text-3xl font-bold text-foreground">$9.99</span>
               <span className="text-muted text-sm">/month</span>
             </div>
             <ul className="space-y-3 mb-6">
@@ -172,115 +212,50 @@ export default function PricingPage() {
 
             {isPremium ? (
               <button
-                onClick={handleCancel}
+                onClick={handleDowngrade}
                 disabled={isCancelling}
                 className="w-full py-2.5 bg-gray-100 text-danger rounded-xl text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors"
               >
-                {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
+                {isCancelling ? '…' : 'Downgrade to Free'}
               </button>
-            ) : planId ? (
-              <div id="paypal-button-container">
-                <PayPalButton planId={planId} onApprove={handleActivate} isLoading={isActivating} />
-              </div>
             ) : (
-              <button
-                disabled
-                className="w-full py-2.5 gradient-bg text-white rounded-xl text-sm font-semibold opacity-50"
-              >
-                PayPal not configured
-              </button>
+              <div className="flex flex-col items-center gap-2">
+                <style>{`.pp-RL8WME7ZGW2LN{text-align:center;border:none;border-radius:0.25rem;min-width:11.625rem;padding:0 2rem;height:2.625rem;font-weight:bold;background-color:#FFD140;color:#000000;font-family:"Helvetica Neue",Arial,sans-serif;font-size:1rem;line-height:1.25rem;cursor:pointer;}`}</style>
+                <form
+                  action={PAYPAL_PAYMENT_URL}
+                  method="post"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2"
+                >
+                  <input className="pp-RL8WME7ZGW2LN" type="submit" value="Buy Now" />
+                  <img
+                    src="https://www.paypalobjects.com/images/Debit_Credit_APM.svg"
+                    alt="cards"
+                    className="h-8"
+                  />
+                </form>
+                <p className="text-[0.75rem] text-muted">
+                  Powered by{' '}
+                  <img
+                    src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg"
+                    alt="PayPal"
+                    className="inline h-3.5 align-middle"
+                  />
+                </p>
+              </div>
             )}
           </div>
         </Card>
       </div>
 
       {message && (
-        <div className={`max-w-md mx-auto flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium ${
-          message.type === 'success' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'
-        }`}>
+        <div
+          className={`max-w-md mx-auto flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium ${
+            message.type === 'success' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'
+          }`}
+        >
           {message.text}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// PayPal Button sub-component
-function PayPalButton({
-  planId,
-  onApprove,
-  isLoading,
-}: {
-  planId: string;
-  onApprove: (subscriptionId: string) => void;
-  isLoading: boolean;
-}) {
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
-
-  // Load PayPal script
-  useState(() => {
-    if (typeof window === 'undefined' || !clientId) return;
-
-    const existing = document.querySelector('script[data-paypal]');
-    if (existing) {
-      setScriptLoaded(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&vault=true&intent=subscription`;
-    script.setAttribute('data-paypal', 'true');
-    script.onload = () => setScriptLoaded(true);
-    document.body.appendChild(script);
-  });
-
-  // Render PayPal buttons
-  useState(() => {
-    if (!scriptLoaded || typeof window === 'undefined') return;
-
-    const paypal = (window as unknown as Record<string, unknown>).paypal as {
-      Buttons?: (config: Record<string, unknown>) => { render: (selector: string) => void };
-    };
-
-    if (!paypal?.Buttons) return;
-
-    const container = document.getElementById('paypal-btn-render');
-    if (!container || container.children.length > 0) return;
-
-    paypal.Buttons({
-      style: { shape: 'pill', color: 'gold', layout: 'horizontal', label: 'subscribe' },
-      createSubscription: (_data: unknown, actions: { subscription: { create: (config: Record<string, string>) => Promise<string> } }) => {
-        return actions.subscription.create({ plan_id: planId });
-      },
-      onApprove: (data: { subscriptionID: string }) => {
-        onApprove(data.subscriptionID);
-      },
-    }).render('#paypal-btn-render');
-  });
-
-  if (!clientId) {
-    return (
-      <button disabled className="w-full py-2.5 gradient-bg text-white rounded-xl text-sm font-semibold opacity-50">
-        PayPal not configured
-      </button>
-    );
-  }
-
-  return (
-    <div>
-      {isLoading ? (
-        <div className="flex items-center justify-center py-3">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-          <span className="ml-2 text-sm text-muted">Activating...</span>
-        </div>
-      ) : (
-        <div id="paypal-btn-render" className="min-h-[45px]">
-          {!scriptLoaded && (
-            <button disabled className="w-full py-2.5 gradient-bg text-white rounded-xl text-sm font-semibold opacity-50">
-              Loading PayPal...
-            </button>
-          )}
         </div>
       )}
     </div>

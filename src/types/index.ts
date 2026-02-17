@@ -68,6 +68,16 @@ export interface UserSubscription {
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
   cancelledAt?: string;
+  /** ISO date string; user has premium access until this date (freemium trial) */
+  trialEndsAt?: string;
+}
+
+/** True if user has premium access (paid or within trial). */
+export function isEffectivePremium(sub?: UserSubscription | null): boolean {
+  if (!sub) return false;
+  if (sub.tier === 'premium') return true;
+  if (sub.trialEndsAt && new Date(sub.trialEndsAt) > new Date()) return true;
+  return false;
 }
 
 export const FREE_TIER_LIMIT = 50;

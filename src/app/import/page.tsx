@@ -18,6 +18,11 @@ export default function ImportPage() {
             ? 'Add expenses manually — upgrade to PRO for file import'
             : 'Upload CSV, Excel, PDF, JSON, or bank files — or add manually'}
         </p>
+        {!isFree && (
+          <p className="text-xs text-muted mt-2 italic">
+            AI categorization is automated and not a substitute for professional verification.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

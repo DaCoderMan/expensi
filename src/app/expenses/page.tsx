@@ -19,7 +19,7 @@ function getCurrencySymbol(currency?: string): string {
 
 export default function ExpensesPage() {
   const { filteredExpenses, filters, setFilters, deleteExpense, updateExpense, clearAllExpenses, isHydrated } = useExpenses();
-  const { isFree, expenseCount, isAtLimit } = useSubscription();
+  const { isFree, expenseCount, isAtLimit, trialExpired } = useSubscription();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Expense>>({});
   const [isClearing, setIsClearing] = useState(false);
@@ -140,8 +140,21 @@ export default function ExpensesPage() {
         </div>
       </div>
 
+      {/* Trial ended — must pay */}
+      {trialExpired && (
+        <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-amber-100 border border-amber-300 text-sm dark:bg-amber-900/30 dark:border-amber-700">
+          <svg className="w-5 h-5 text-amber-600 shrink-0 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-amber-900 font-medium dark:text-amber-200">
+            Your free trial has ended. Pay to get PRO for unlimited expenses and AI features.{' '}
+            <Link href="/pricing" className="text-primary underline font-bold">Upgrade now</Link>
+          </p>
+        </div>
+      )}
+
       {/* Free Tier Limit Banner */}
-      {isFree && isAtLimit && (
+      {isFree && isAtLimit && !trialExpired && (
         <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-amber-50 border border-amber-200 text-sm">
           <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

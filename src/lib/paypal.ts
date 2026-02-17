@@ -1,12 +1,19 @@
-const PAYPAL_API_BASE = process.env.NODE_ENV === 'production'
-  ? 'https://api-m.paypal.com'
-  : 'https://api-m.sandbox.paypal.com';
+/**
+ * Minimal PayPal helpers for webhook signature verification only.
+ * Requires: NEXT_PUBLIC_PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_WEBHOOK_ID
+ */
+
+const base =
+  process.env.PAYPAL_ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production'
+    ? 'https://api-m.paypal.com'
+    : 'https://api-m.sandbox.paypal.com';
 
 export async function getPayPalAccessToken(): Promise<string> {
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!;
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET!;
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+  if (!clientId || !clientSecret) throw new Error('PayPal credentials not configured');
 
-  const res = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+  const res = await fetch(`${base}/v1/oauth2/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -14,62 +21,49 @@ export async function getPayPalAccessToken(): Promise<string> {
     },
     body: 'grant_type=client_credentials',
   });
-
-  if (!res.ok) {
-    throw new Error('Failed to get PayPal access token');
-  }
-
-  const data = await res.json();
-  return data.access_token;
+  if (!res.ok) throw new Error('Failed to get PayPal access token');
+  const data = (await res.json()) as { access_token?: string };
+  return data.access_token!;
 }
 
-export async function verifySubscription(subscriptionId: string): Promise<{
-  status: string;
-  planId: string;
-  subscriberId: string;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-} | null> {
-  try {
-    const accessToken = await getPayPalAccessToken();
-
-    const res = await fetch(`${PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-
-    return {
-      status: data.status,
-      planId: data.plan_id,
-      subscriberId: data.subscriber?.payer_id || '',
-      currentPeriodStart: data.billing_info?.last_payment?.time || data.start_time,
-      currentPeriodEnd: data.billing_info?.next_billing_time || '',
-    };
-  } catch {
-    return null;
+export async function verifyWebhookSignature(
+  headers: Headers,
+  body: Record<string, unknown>
+): Promise<boolean> {
+  const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+  if (!webhookId) {
+    console.warn('PAYPAL_WEBHOOK_ID not set; skipping webhook verification');
+    return true;
   }
-}
-
-export async function cancelPayPalSubscription(subscriptionId: string): Promise<boolean> {
+  const authAlgo = headers.get('paypal-auth-algo');
+  const certUrl = headers.get('paypal-cert-url');
+  const transmissionId = headers.get('paypal-transmission-id');
+  const transmissionSig = headers.get('paypal-transmission-sig');
+  const transmissionTime = headers.get('paypal-transmission-time');
+  if (!authAlgo || !certUrl || !transmissionId || !transmissionSig || !transmissionTime) {
+    return false;
+  }
   try {
     const accessToken = await getPayPalAccessToken();
-
-    const res = await fetch(`${PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/cancel`, {
+    const res = await fetch(`${base}/v1/notifications/verify-webhook-signature`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ reason: 'User cancelled from Expensi' }),
+      body: JSON.stringify({
+        auth_algo: authAlgo,
+        cert_url: certUrl,
+        transmission_id: transmissionId,
+        transmission_sig: transmissionSig,
+        transmission_time: transmissionTime,
+        webhook_id: webhookId,
+        webhook_event: body,
+      }),
     });
-
-    return res.status === 204 || res.ok;
+    if (!res.ok) return false;
+    const data = (await res.json()) as { verification_status?: string };
+    return data.verification_status === 'SUCCESS';
   } catch {
     return false;
   }

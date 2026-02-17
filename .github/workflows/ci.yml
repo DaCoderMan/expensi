@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:ci
+
+      - name: Build
+        run: npm run build
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/expensi
+          AUTH_SECRET: test-secret-for-ci-build
+          AUTH_GOOGLE_ID: ''
+          AUTH_GOOGLE_SECRET: ''
+          AUTH_GITHUB_ID: ''
+          AUTH_GITHUB_SECRET: ''
+
+      - name: Install Playwright browsers and Chrome for Selenium
+        run: |
+          npx playwright install chromium --with-deps
+          (sudo apt-get update && sudo apt-get install -y chromium-browser) || (sudo apt-get install -y chromium) || true
+
+      - name: Start dev server
+        run: |
+          npm run dev &
+          timeout 60 bash -c 'until curl -sf http://localhost:3000; do sleep 2; done'
+        env:
+          CI: true
+          MONGODB_URI: mongodb://127.0.0.1:27017/expensi
+          AUTH_SECRET: test-secret-for-ci-build
+          AUTH_GOOGLE_ID: ''
+          AUTH_GOOGLE_SECRET: ''
+          AUTH_GITHUB_ID: ''
+          AUTH_GITHUB_SECRET: ''
+
+      - name: E2E Selenium
+        run: npm run test:e2e:selenium
+        env:
+          CI: true
+          BASE_URL: http://localhost:3000
+
+      - name: E2E Puppeteer
+        run: npm run test:e2e:puppeteer
+        env:
+          CI: true
+          BASE_URL: http://localhost:3000
+
+      - name: E2E Playwright
+        run: npm run test:e2e:ci
+        env:
+          CI: true
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          MONGODB_URI: mongodb://127.0.0.1:27017/expensi
+          AUTH_SECRET: test-secret-for-ci-build
+          AUTH_GOOGLE_ID: ''
+          AUTH_GOOGLE_SECRET: ''
+          AUTH_GITHUB_ID: ''
+          AUTH_GITHUB_SECRET: ''

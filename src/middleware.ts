@@ -1,4 +1,4 @@
-export { auth as middleware } from '@/lib/auth';
+export { auth as middleware } from '@/lib/auth.config';
 
 export const config = {
   matcher: [
@@ -9,6 +9,6 @@ export const config = {
      * - _next (Next.js internals)
      * - favicon.ico, images, static files
      */
-    '/((?!api/auth|auth|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!api/auth|api/webhooks|auth|terms|privacy|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };

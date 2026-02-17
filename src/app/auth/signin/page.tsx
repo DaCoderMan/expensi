@@ -1,14 +1,31 @@
 'use client';
 
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [devEmail, setDevEmail] = useState('dev@localhost');
+  const [devPassword, setDevPassword] = useState('');
 
   async function handleSignIn(provider: string) {
     setIsLoading(provider);
     await signIn(provider, { callbackUrl: '/' });
+  }
+
+  async function handleDevSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    if (!devEmail.trim() || !devPassword) return;
+    setIsLoading('credentials');
+    await signIn('credentials', {
+      email: devEmail.trim(),
+      password: devPassword,
+      callbackUrl: '/',
+    });
+    setIsLoading(null);
   }
 
   return (
@@ -62,9 +79,48 @@ export default function SignInPage() {
             </button>
           </div>
 
+          {isDev && (
+            <form onSubmit={handleDevSignIn} className="mt-6 pt-6 border-t border-border space-y-3">
+              <p className="text-xs font-medium text-muted uppercase tracking-wide">Dev only</p>
+              <input
+                type="email"
+                value={devEmail}
+                onChange={(e) => setDevEmail(e.target.value)}
+                placeholder="dev@localhost"
+                className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-muted/30"
+                autoComplete="username"
+              />
+              <input
+                type="password"
+                value={devPassword}
+                onChange={(e) => setDevPassword(e.target.value)}
+                placeholder="DEV_PASSWORD from .env"
+                className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-muted/30"
+                autoComplete="current-password"
+              />
+              <button
+                type="submit"
+                disabled={isLoading !== null || !devPassword}
+                className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
+              >
+                {isLoading === 'credentials' ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-current" />
+                    Signing in…
+                  </span>
+                ) : (
+                  'Sign in (dev)'
+                )}
+              </button>
+            </form>
+          )}
+
           <div className="mt-6 text-center">
             <p className="text-xs text-muted">
-              By signing in, you agree to our terms of service and privacy policy.
+              By signing in, you agree to our{' '}
+              <Link href="/terms" className="underline hover:no-underline">Terms of Service</Link>
+              {' '}and{' '}
+              <Link href="/privacy" className="underline hover:no-underline">Privacy Policy</Link>.
             </p>
           </div>
         </div>
