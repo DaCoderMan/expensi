@@ -23,6 +23,8 @@ export default function ManualEntryForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showPresets, setShowPresets] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ description?: string; amount?: string }>({});
+  const [touched, setTouched] = useState<{ description?: boolean; amount?: boolean }>({});
   const presetsPanelRef = useRef<HTMLDivElement>(null);
 
   // Smart math warnings
@@ -92,15 +94,25 @@ export default function ManualEntryForm() {
     setMessage(null);
   }
 
+  function validateFields(): { description?: string; amount?: string } {
+    const errors: { description?: string; amount?: string } = {};
+    if (!description.trim()) errors.description = 'Description is required';
+    const parsed = parseFloat(amount);
+    if (!amount) errors.amount = 'Amount is required';
+    else if (isNaN(parsed) || parsed <= 0) errors.amount = 'Amount must be greater than 0';
+    return errors;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
 
+    const errors = validateFields();
+    setFieldErrors(errors);
+    setTouched({ description: true, amount: true });
+    if (Object.keys(errors).length > 0) return;
+
     const parsedAmount = parseFloat(amount);
-    if (!description.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
-      setMessage({ type: 'error', text: 'Please enter a valid description and amount.' });
-      return;
-    }
 
     // Warn about duplicates if not dismissed
     if (duplicates.length > 0 && !dismissedDuplicates) {
@@ -155,6 +167,8 @@ export default function ManualEntryForm() {
       setNotes('');
       setDuplicates([]);
       setDismissedDuplicates(false);
+      setFieldErrors({});
+      setTouched({});
     } catch (error) {
       setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to add expense.' });
     }
@@ -180,6 +194,8 @@ export default function ManualEntryForm() {
           <button
             type="button"
             onClick={() => setShowPresets(!showPresets)}
+            aria-label="Quick presets"
+            aria-expanded={showPresets}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-light text-primary rounded-lg text-xs font-medium hover:bg-teal-100 transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,11 +228,21 @@ export default function ManualEntryForm() {
           <input
             type="text"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              if (touched.description) setFieldErrors((prev) => ({ ...prev, description: e.target.value.trim() ? undefined : 'Description is required' }));
+            }}
+            onBlur={() => {
+              setTouched((prev) => ({ ...prev, description: true }));
+              if (!description.trim()) setFieldErrors((prev) => ({ ...prev, description: 'Description is required' }));
+            }}
             placeholder="e.g., Grocery shopping"
-            className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-background"
+            className={`w-full px-4 py-2.5 border rounded-xl text-sm bg-background ${touched.description && fieldErrors.description ? 'border-red-400 focus:ring-red-300' : 'border-border'}`}
             required
           />
+          {touched.description && fieldErrors.description && (
+            <p className="mt-1 text-xs text-danger">{fieldErrors.description}</p>
+          )}
         </div>
 
         {/* Amount + Currency row */}
@@ -237,16 +263,31 @@ export default function ManualEntryForm() {
             <input
               type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                if (touched.amount) {
+                  const v = parseFloat(e.target.value);
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    amount: !e.target.value ? 'Amount is required' : (isNaN(v) || v <= 0) ? 'Amount must be greater than 0' : undefined,
+                  }));
+                }
+              }}
+              onBlur={() => {
+                setTouched((prev) => ({ ...prev, amount: true }));
+                const v = parseFloat(amount);
+                if (!amount) setFieldErrors((prev) => ({ ...prev, amount: 'Amount is required' }));
+                else if (isNaN(v) || v <= 0) setFieldErrors((prev) => ({ ...prev, amount: 'Amount must be greater than 0' }));
+              }}
               placeholder="0.00"
               step="0.01"
               min="0.01"
-              className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-background"
+              className={`w-full px-4 py-2.5 border rounded-xl text-sm bg-background ${touched.amount && fieldErrors.amount ? 'border-red-400 focus:ring-red-300' : 'border-border'}`}
               required
             />
           </div>
-          {amount !== '' && (parseFloat(amount) <= 0 || Number.isNaN(parseFloat(amount))) && (
-            <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">Amount must be greater than 0</p>
+          {touched.amount && fieldErrors.amount && (
+            <p className="mt-1 text-xs text-danger">{fieldErrors.amount}</p>
           )}
 
           {/* Smart math warnings */}

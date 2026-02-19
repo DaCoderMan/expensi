@@ -18,6 +18,8 @@ const UserSchema = new Schema({
   image: String,
   // For email+password auth
   passwordHash: { type: String },
+  resetToken: { type: String },
+  resetTokenExpiry: { type: Date },
   subscription: { type: SubscriptionSchema, default: () => ({ tier: 'free' }) },
 }, { timestamps: true });
 

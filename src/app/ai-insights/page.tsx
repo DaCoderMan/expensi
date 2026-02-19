@@ -101,10 +101,42 @@ export default function AIInsightsPage() {
           <h1 className="text-2xl font-bold text-foreground">AI Insights</h1>
           <p className="text-sm text-muted mt-1">Get personalized spending recommendations</p>
         </div>
+
+        {/* Preview sample insights */}
+        <div className="space-y-4 opacity-60 pointer-events-none select-none" aria-hidden="true">
+          {[
+            { title: 'Reduce dining expenses', priority: 'high' as const, desc: 'Your restaurant spending is 40% above average. Consider meal prepping 2-3 days a week.', savings: '$120/mo' },
+            { title: 'Subscription audit', priority: 'medium' as const, desc: 'You have 5 active subscriptions. Review if all are still needed.', savings: '$45/mo' },
+            { title: 'Great savings habit', priority: 'low' as const, desc: 'Your grocery spending has decreased 15% this month. Keep it up!', savings: undefined },
+          ].map((rec) => (
+            <Card key={rec.title} className="relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+                    <h3 className="font-semibold text-foreground">{rec.title}</h3>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-semibold border ${PRIORITY_STYLES[rec.priority]}`}>
+                      {PRIORITY_ICONS[rec.priority]}
+                      {rec.priority}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted leading-relaxed">{rec.desc}</p>
+                </div>
+                {rec.savings && (
+                  <div className="sm:text-right shrink-0 bg-success-light px-4 py-3 rounded-xl">
+                    <p className="text-xs text-muted font-medium mb-0.5">Potential savings</p>
+                    <p className="text-xl font-bold text-success">{rec.savings}</p>
+                  </div>
+                )}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/80 dark:to-gray-900/80" />
+            </Card>
+          ))}
+        </div>
+
         <Card>
           <UpgradePrompt
             feature="AI Insights"
-            description="Get personalized spending recommendations, savings opportunities, and smart financial tips powered by AI."
+            description="Unlock personalized spending recommendations, savings opportunities, and smart financial tips powered by AI."
           />
         </Card>
       </div>
