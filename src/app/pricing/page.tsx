@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useState } from 'react';
 import Card from '@/components/ui/Card';
@@ -96,6 +97,16 @@ export default function PricingPage() {
       <div className="text-center">
         <h1 className="text-3xl font-bold text-foreground mb-2">Choose Your Plan</h1>
         <p className="text-muted">Unlock the full power of AI-driven expense tracking</p>
+        {!session?.user && (
+          <div className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700">
+            <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+              Sign up for a <span className="underline">3-day free trial</span> of all PRO features &mdash; no credit card required
+            </p>
+          </div>
+        )}
       </div>
 
       {trialExpired && (
@@ -220,6 +231,13 @@ export default function PricingPage() {
               >
                 {isCancelling ? '…' : 'Downgrade to Free'}
               </button>
+            ) : !session?.user ? (
+              <Link
+                href="/auth/register"
+                className="w-full py-2.5 rounded-xl text-sm font-semibold gradient-bg text-white text-center block hover:opacity-90 transition-opacity"
+              >
+                Start 3-Day Free Trial
+              </Link>
             ) : (
               <div className="flex flex-col items-center gap-2">
                 {isSandbox && (

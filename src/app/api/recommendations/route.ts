@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAuth } from '@/lib/subscription-guard';
 import { deepseek } from '@/lib/deepseek';
 import { buildRecommendationsPrompt } from '@/lib/prompts';
 import { Expense, ExpenseCategory, SpendingSummary } from '@/types';
@@ -45,10 +45,8 @@ function buildSummary(expenses: Expense[], period: string): SpendingSummary {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const guard = await requireAuth({ requirePremium: true });
+    if (!guard.authorized) return guard.response;
 
     if (!process.env.DEEPSEEK_API_KEY) {
       return NextResponse.json(

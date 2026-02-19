@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ExpenseCategory, CurrencyCode } from '@/types';
 import { CATEGORIES, CATEGORY_LABELS } from '@/lib/constants';
 import { useExpenses } from '@/context/ExpenseContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { CURRENCIES, validateAmount, findDuplicates, roundAmount, formatCurrency, AmountWarning, DuplicateMatch } from '@/lib/validation';
 import { getAllPresets } from '@/lib/presets';
 
@@ -12,10 +13,11 @@ const CURRENCY_CODES = Object.keys(CURRENCIES) as CurrencyCode[];
 
 export default function ManualEntryForm() {
   const { addExpense, expenses } = useExpenses();
+  const { isPremium } = useSubscription();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [category, setCategory] = useState<ExpenseCategory | 'auto'>('auto');
+  const [category, setCategory] = useState<ExpenseCategory | 'auto'>('other');
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +32,11 @@ export default function ManualEntryForm() {
   const [dismissedDuplicates, setDismissedDuplicates] = useState(false);
 
   const presets = useMemo(() => getAllPresets(), []);
+
+  // Set default category to 'auto' once premium status is confirmed
+  useEffect(() => {
+    if (isPremium) setCategory('auto');
+  }, [isPremium]);
 
   // Validate amount in real time
   useEffect(() => {
@@ -107,7 +114,7 @@ export default function ManualEntryForm() {
     let finalCategory: ExpenseCategory = 'other';
     let isAutoCategorized = false;
 
-    if (category === 'auto') {
+    if (category === 'auto' && isPremium) {
       try {
         const res = await fetch('/api/categorize', {
           method: 'POST',
@@ -124,7 +131,7 @@ export default function ManualEntryForm() {
       } catch {
         // Fall back to 'other' if AI fails
       }
-    } else {
+    } else if (category !== 'auto') {
       finalCategory = category;
     }
 
@@ -144,7 +151,7 @@ export default function ManualEntryForm() {
       setDescription('');
       setAmount('');
       setDate(new Date().toISOString().slice(0, 10));
-      setCategory('auto');
+      setCategory(isPremium ? 'auto' : 'other');
       setNotes('');
       setDuplicates([]);
       setDismissedDuplicates(false);
@@ -277,7 +284,7 @@ export default function ManualEntryForm() {
             onChange={(e) => setCategory(e.target.value as ExpenseCategory | 'auto')}
             className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-background"
           >
-            <option value="auto">Auto-detect (AI)</option>
+            {isPremium && <option value="auto">Auto-detect (AI)</option>}
             {CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
                 {CATEGORY_LABELS[cat]}

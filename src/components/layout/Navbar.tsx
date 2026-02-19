@@ -72,7 +72,12 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isPremium = isEffectivePremium(session?.user?.subscription);
+  const sub = session?.user?.subscription;
+  const isPremium = isEffectivePremium(sub);
+  const isInTrial = sub?.tier === 'free' && sub?.trialEndsAt && new Date(sub.trialEndsAt) > new Date();
+  const trialDaysLeft = isInTrial && sub?.trialEndsAt
+    ? Math.max(0, Math.ceil((new Date(sub.trialEndsAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : 0;
 
   return (
     <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-border/50 sticky top-0 z-50">
@@ -164,9 +169,14 @@ export default function Navbar() {
                       </span>
                     </div>
                   )}
-                  {isPremium && (
+                  {isPremium && !isInTrial && (
                     <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
                       PRO
+                    </span>
+                  )}
+                  {isInTrial && (
+                    <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
+                      Trial {trialDaysLeft}d
                     </span>
                   )}
                 </button>
@@ -181,9 +191,13 @@ export default function Navbar() {
                         {session.user.email}
                       </p>
                       <div className="mt-1">
-                        {isPremium ? (
+                        {isPremium && !isInTrial ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase">
                             PRO Plan
+                          </span>
+                        ) : isInTrial ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase">
+                            Trial &mdash; {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} left
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-muted text-[10px] font-bold uppercase">

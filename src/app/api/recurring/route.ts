@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { requireAuth } from '@/lib/subscription-guard';
 import { connectDB } from '@/lib/mongodb';
 import { RecurringExpenseModel } from '@/models/Expense';
 import type { RecurringFrequency } from '@/types';
@@ -86,10 +87,9 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
  * The nextDue field is automatically computed from startDate and frequency.
  */
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireAuth({ requirePremium: true });
+  if (!guard.authorized) return guard.response;
+  const userId = guard.userId;
 
   let body: Record<string, unknown>;
   try {
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
   }
 
   const doc = await RecurringExpenseModel.create({
-    userId: session.user.id,
+    userId,
     name,
     description,
     amount,

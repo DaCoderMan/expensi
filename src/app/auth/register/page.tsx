@@ -58,10 +58,14 @@ export default function RegisterPage() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold gradient-text mb-2">Financi AI</h1>
-          <p className="text-muted text-sm">Create your account</p>
+          <p className="text-muted text-sm">Create your account and get 3 days of PRO free</p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-border/60 p-8">
+          <div className="mb-6 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-center">
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">3-day free trial included</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Unlimited expenses, AI features, file import &mdash; no credit card needed</p>
+          </div>
           <h2 className="text-lg font-semibold text-foreground text-center mb-6">Sign up</h2>
 
           <div className="space-y-3 mb-6">

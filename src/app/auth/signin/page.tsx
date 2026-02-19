@@ -188,11 +188,12 @@ export default function SignInPage() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-muted mt-6">
-          Free plan includes 50 expenses with manual entry.
-          <br />
-          <span className="text-primary font-medium">Upgrade to PRO</span> for unlimited expenses + AI features.
-        </p>
+        <div className="mt-6 text-center">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs font-semibold">
+            New accounts get a 3-day free trial of all PRO features
+          </span>
+          <p className="mt-2 text-xs text-muted">Unlimited expenses, AI categorization, file import &amp; more.</p>
+        </div>
       </div>
     </div>
   );
