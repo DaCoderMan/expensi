@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import { ExpenseCategory, CurrencyCode } from '@/types';
 import { CATEGORIES, CATEGORY_LABELS } from '@/lib/constants';
 import { useExpenses } from '@/context/ExpenseContext';
@@ -20,6 +21,7 @@ export default function ManualEntryForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showPresets, setShowPresets] = useState(false);
+  const presetsPanelRef = useRef<HTMLDivElement>(null);
 
   // Smart math warnings
   const [amountWarnings, setAmountWarnings] = useState<AmountWarning[]>([]);
@@ -54,9 +56,28 @@ export default function ManualEntryForm() {
     }
   }, [description, amount, date, expenses]);
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShowPresets(false);
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (!showPresets) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (presetsPanelRef.current && !presetsPanelRef.current.contains(e.target as Node)) {
+        setShowPresets(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showPresets]);
+
   function applyPreset(preset: { description: string; amount: number; category: ExpenseCategory; currency: CurrencyCode; notes?: string }) {
     setDescription(preset.description);
-    setAmount(preset.amount.toString());
+    setAmount(preset.amount.toFixed(2));
     setCategory(preset.category);
     setCurrency(preset.currency);
     setNotes(preset.notes || '');
@@ -148,34 +169,35 @@ export default function ManualEntryForm() {
             <p className="text-xs text-muted">Add a single expense</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowPresets(!showPresets)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-light text-primary rounded-lg text-xs font-medium hover:bg-teal-100 transition-colors"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Presets
-        </button>
-      </div>
-
-      {/* Preset Quick-Select */}
-      {showPresets && (
-        <div className="grid grid-cols-2 gap-2 p-3 bg-gray-50 rounded-xl border border-border/60 animate-fade-in">
-          {presets.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => applyPreset(preset)}
-              className="flex items-center gap-2 px-3 py-2 bg-white border border-border/60 rounded-lg text-left hover:border-primary hover:bg-primary-light/30 transition-all text-xs group"
-            >
-              <span className="font-medium text-foreground group-hover:text-primary truncate">{preset.name}</span>
-              <span className="ml-auto text-muted font-semibold tabular-nums shrink-0">${preset.amount.toFixed(2)}</span>
-            </button>
-          ))}
+        <div ref={presetsPanelRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setShowPresets(!showPresets)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-light text-primary rounded-lg text-xs font-medium hover:bg-teal-100 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Presets
+          </button>
+          {/* Preset Quick-Select */}
+          {showPresets && (
+            <div className="absolute right-0 top-full mt-2 z-10 w-48 flex flex-col gap-1 p-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-border/60 animate-fade-in shadow-lg">
+              {presets.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => applyPreset(preset)}
+                  className="flex items-center justify-between gap-2 px-3 py-2 bg-white dark:bg-card border border-border/60 rounded-lg text-left hover:border-primary hover:bg-primary-light/30 transition-all text-xs group"
+                >
+                  <span className="font-medium text-foreground group-hover:text-primary min-w-0 flex-1">{preset.name}</span>
+                  <span className="text-muted font-semibold tabular-nums shrink-0">${preset.amount.toFixed(2)}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="space-y-4">
         <div>
@@ -185,7 +207,7 @@ export default function ManualEntryForm() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g., Grocery shopping"
-            className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-white"
+            className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-background"
             required
           />
         </div>
@@ -197,7 +219,7 @@ export default function ManualEntryForm() {
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
-              className="px-3 py-2.5 border border-border rounded-xl text-sm bg-white w-24 shrink-0"
+              className="px-3 py-2.5 border border-border rounded-xl text-sm bg-background w-24 shrink-0"
             >
               {CURRENCY_CODES.map((code) => (
                 <option key={code} value={code}>
@@ -212,10 +234,13 @@ export default function ManualEntryForm() {
               placeholder="0.00"
               step="0.01"
               min="0.01"
-              className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-white"
+              className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-background"
               required
             />
           </div>
+          {amount !== '' && (parseFloat(amount) <= 0 || Number.isNaN(parseFloat(amount))) && (
+            <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">Amount must be greater than 0</p>
+          )}
 
           {/* Smart math warnings */}
           {amountWarnings.length > 0 && (
@@ -223,12 +248,12 @@ export default function ManualEntryForm() {
               {amountWarnings.map((w, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-xs"
                 >
-                  <svg className="w-3.5 h-3.5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="text-amber-700">{w.message}</span>
+                  <span className="text-amber-700 dark:text-amber-300">{w.message}</span>
                 </div>
               ))}
             </div>
@@ -241,7 +266,7 @@ export default function ManualEntryForm() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-white"
+            className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-background dark:bg-gray-800 dark:text-foreground dark:[color-scheme:dark]"
             required
           />
         </div>
@@ -250,7 +275,7 @@ export default function ManualEntryForm() {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as ExpenseCategory | 'auto')}
-            className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-white"
+            className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-background"
           >
             <option value="auto">Auto-detect (AI)</option>
             {CATEGORIES.map((cat) => (
@@ -267,27 +292,27 @@ export default function ManualEntryForm() {
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Any additional details..."
             rows={2}
-            className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-white resize-none"
+            className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-background resize-none"
           />
         </div>
       </div>
 
       {/* Duplicate warning */}
       {duplicates.length > 0 && !dismissedDuplicates && (
-        <div className="px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 animate-fade-in">
+        <div className="px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 animate-fade-in">
           <div className="flex items-start gap-2">
-            <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-amber-800">Possible duplicate{duplicates.length > 1 ? 's' : ''} found</p>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Possible duplicate{duplicates.length > 1 ? 's' : ''} found</p>
               {duplicates.slice(0, 2).map((d, i) => (
-                <p key={i} className="text-xs text-amber-600 mt-1 truncate">{d.reason}</p>
+                <p key={i} className="text-xs text-amber-600 dark:text-amber-400 mt-1 truncate">{d.reason}</p>
               ))}
               <button
                 type="button"
                 onClick={() => setDismissedDuplicates(true)}
-                className="mt-2 text-xs font-medium text-amber-700 underline hover:no-underline"
+                className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300 underline hover:no-underline"
               >
                 Dismiss &amp; add anyway
               </button>
@@ -307,7 +332,13 @@ export default function ManualEntryForm() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             )}
           </svg>
-          {message.text}
+          <span className="flex-1">{message.text}</span>
+          {message.type === 'error' && message.text.includes('sign in') && (
+            <Link href="/auth/signin" className="shrink-0 font-semibold underline hover:no-underline">Sign in</Link>
+          )}
+          <button type="button" onClick={() => setMessage(null)} className="shrink-0 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10" aria-label="Dismiss">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
       )}
 

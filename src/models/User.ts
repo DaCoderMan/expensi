@@ -16,6 +16,8 @@ const UserSchema = new Schema({
   email: { type: String, unique: true },
   emailVerified: Date,
   image: String,
+  // For email+password auth
+  passwordHash: { type: String },
   subscription: { type: SubscriptionSchema, default: () => ({ tier: 'free' }) },
 }, { timestamps: true });
 

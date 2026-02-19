@@ -181,6 +181,9 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       });
       if (!res.ok) {
         const data = await res.json();
+        if (res.status === 401) {
+          throw new Error('Please sign in to add expenses.');
+        }
         throw new Error(data.error || 'Failed to add expense');
       }
       const data = await res.json();
@@ -202,6 +205,9 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       });
       if (!res.ok) {
         const data = await res.json();
+        if (res.status === 401) {
+          throw new Error('Please sign in to add expenses.');
+        }
         throw new Error(data.error || 'Failed to add expenses');
       }
       const data = await res.json();

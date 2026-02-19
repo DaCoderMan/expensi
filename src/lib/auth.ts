@@ -6,6 +6,8 @@ import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import clientPromise from '@/lib/mongodb';
 import { connectDB } from '@/lib/mongodb';
 import { User } from '@/models/User';
+import { sendWelcomeEmail } from '@/lib/email';
+import { verifyPassword } from '@/lib/password';
 
 const isDev = process.env.NODE_ENV === 'development' || process.env.AUTH_DEV_CREDENTIALS === 'true';
 
@@ -19,6 +21,35 @@ const providers = [
   GitHub({
     clientId: process.env.AUTH_GITHUB_ID || '',
     clientSecret: process.env.AUTH_GITHUB_SECRET || '',
+  }),
+  // Real email+password login backed by MongoDB
+  Credentials({
+    id: 'email-login',
+    name: 'Email login',
+    credentials: {
+      email: { label: 'Email', type: 'email' },
+      password: { label: 'Password', type: 'password' },
+    },
+    async authorize(credentials) {
+      if (!credentials?.email || !credentials?.password) return null;
+
+      await connectDB();
+      const email = String(credentials.email).toLowerCase().trim();
+
+      const user = await User.findOne({ email }).lean<{ _id: unknown; email?: string; name?: string; passwordHash?: string | null }>();
+      if (!user || !user.passwordHash) {
+        return null;
+      }
+
+      const ok = verifyPassword(String(credentials.password), user.passwordHash);
+      if (!ok) return null;
+
+      return {
+        id: String(user._id),
+        email: user.email ?? email,
+        name: user.name ?? email,
+      };
+    },
   }),
 ];
 
@@ -41,7 +72,7 @@ if (isDev) {
         if (email !== devEmail.toLowerCase()) return null;
 
         await connectDB();
-        let user = await User.findOne({ email }).lean();
+        let user = await User.findOne({ email }).lean<{ _id: unknown; email?: string; name?: string }>();
         if (!user) {
           const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
           const created = await User.create({
@@ -49,12 +80,12 @@ if (isDev) {
             name: 'Dev User',
             subscription: { tier: 'free', trialEndsAt },
           });
-          user = created.toObject();
+          user = created.toObject() as { _id: unknown; email?: string; name?: string };
         }
         return {
-          id: (user as { _id: unknown })._id.toString(),
-          email: (user as { email?: string }).email ?? email,
-          name: (user as { name?: string }).name ?? 'Dev User',
+          id: String(user._id),
+          email: user.email ?? email,
+          name: user.name ?? 'Dev User',
         };
       },
     })
@@ -128,6 +159,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
           },
         });
+
+        // Fire-and-forget welcome email via Resend
+        if (user.email) {
+          // Do not await; email failures should not block user creation
+          void sendWelcomeEmail(user.email, user.name ?? undefined);
+        }
       } catch (error) {
         console.error('Error setting default subscription:', error);
       }

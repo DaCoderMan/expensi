@@ -2,8 +2,8 @@ import Card from '@/components/ui/Card';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Terms of Service - Expensi',
-  description: 'Terms of Service for Expensi, a personal expense tracking tool.',
+  title: 'Terms of Service - Financi AI',
+  description: 'Terms of Service for Financi AI, a personal expense tracking tool.',
 };
 
 export default function TermsPage() {
@@ -17,14 +17,14 @@ export default function TermsPage() {
       <Card className="prose prose-sm dark:prose-invert max-w-none">
         <h2>1. Service Description</h2>
         <p>
-          Expensi (&quot;Service&quot;) is a personal expense tracking tool that helps you record, categorize, and analyze
+          Financi AI (&quot;Service&quot;) is a personal expense tracking tool that helps you record, categorize, and analyze
           your spending. It provides AI-powered categorization, import from files (CSV, Excel, PDF, etc.), and
           spending insights. The Service is provided by Workitu Tech (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;).
         </p>
 
         <h2>2. Important Disclaimer – Tool Only, Not Professional Advice</h2>
         <p className="font-medium text-amber-700 dark:text-amber-400">
-          Expensi is a personal expense tracking tool. It is not a professional accounting, tax, or financial planning
+          Financi AI is a personal expense tracking tool. It is not a professional accounting, tax, or financial planning
           service. It is not a professional device. Do not rely on it for tax, legal, or investment decisions.
         </p>
         <p>
@@ -78,7 +78,7 @@ export default function TermsPage() {
       </Card>
 
       <p className="text-center text-sm text-muted">
-        <Link href="/" className="underline hover:no-underline">Back to Expensi</Link>
+        <Link href="/" className="underline hover:no-underline">Back to Financi AI</Link>
       </p>
     </div>
   );

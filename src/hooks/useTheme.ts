@@ -9,7 +9,7 @@ export function useTheme() {
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('expensi-theme') as Theme | null;
+    const saved = localStorage.getItem('financiai-theme') as Theme | null;
     const initial = saved || 'light';
     setTheme(initial);
     document.documentElement.classList.toggle('dark', initial === 'dark');
@@ -19,7 +19,7 @@ export function useTheme() {
   const toggleTheme = useCallback(() => {
     setTheme((prev) => {
       const next = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem('expensi-theme', next);
+      localStorage.setItem('financiai-theme', next);
       document.documentElement.classList.toggle('dark', next === 'dark');
       return next;
     });

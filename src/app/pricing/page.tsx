@@ -5,7 +5,9 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useState } from 'react';
 import Card from '@/components/ui/Card';
 
-const PAYPAL_PAYMENT_URL = 'https://www.paypal.com/ncp/payment/RL8WME7ZGW2LN';
+const PAYPAL_PAYMENT_URL = process.env.NEXT_PUBLIC_PAYPAL_PAYMENT_URL || 'https://www.paypal.com/ncp/payment/RL8WME7ZGW2LN';
+const isSandbox = PAYPAL_PAYMENT_URL.includes('sandbox.paypal.com');
+const PAYPAL_SUMMARY = 'You\'ll go to PayPal to complete your $9.99/month PRO payment. Continue?';
 
 export default function PricingPage() {
   const { data: session } = useSession();
@@ -83,7 +85,7 @@ export default function PricingPage() {
       'Unlimited expenses',
       'AI auto-categorization',
       'AI spending insights',
-      'File import (CSV, Excel, PDF, JSON, OFX)',
+      'File import (CSV, Excel, PDF, JSON, OFX/QFX)',
       'Priority support',
       'All future features',
     ],
@@ -220,6 +222,11 @@ export default function PricingPage() {
               </button>
             ) : (
               <div className="flex flex-col items-center gap-2">
+                {isSandbox && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 text-xs font-semibold">
+                    Sandbox — no real charges
+                  </span>
+                )}
                 <style>{`.pp-RL8WME7ZGW2LN{text-align:center;border:none;border-radius:0.25rem;min-width:11.625rem;padding:0 2rem;height:2.625rem;font-weight:bold;background-color:#FFD140;color:#000000;font-family:"Helvetica Neue",Arial,sans-serif;font-size:1rem;line-height:1.25rem;cursor:pointer;}`}</style>
                 <form
                   action={PAYPAL_PAYMENT_URL}
@@ -227,6 +234,16 @@ export default function PricingPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-col items-center gap-2"
+                  onSubmit={(e) => {
+                    if (!session?.user) {
+                      e.preventDefault();
+                      window.location.href = '/auth/signin?callbackUrl=' + encodeURIComponent('/pricing');
+                      return;
+                    }
+                    if (!confirm(PAYPAL_SUMMARY)) {
+                      e.preventDefault();
+                    }
+                  }}
                 >
                   <input className="pp-RL8WME7ZGW2LN" type="submit" value="Buy Now" />
                   <img

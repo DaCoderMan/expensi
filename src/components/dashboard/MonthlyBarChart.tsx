@@ -6,8 +6,16 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 export default function MonthlyBarChart() {
   const { monthlyTotals } = useExpenses();
 
+  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const formatMonth = (ym: string) => {
+    const [y, m] = ym.split('-');
+    const idx = parseInt(m || '1', 10) - 1;
+    return `${MONTH_NAMES[idx] || m} ${y}`;
+  };
+
   const data = monthlyTotals.slice(-6).map((item) => ({
     month: item.month,
+    monthLabel: formatMonth(item.month),
     total: Math.round(item.total * 100) / 100,
   }));
 
@@ -21,7 +29,7 @@ export default function MonthlyBarChart() {
           <BarChart data={data} barCategoryGap="25%">
             <CartesianGrid strokeDasharray="3 3" stroke="#edf2f7" vertical={false} />
             <XAxis
-              dataKey="month"
+              dataKey="monthLabel"
               tick={{ fontSize: 12, fill: '#718096' }}
               axisLine={false}
               tickLine={false}

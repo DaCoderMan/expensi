@@ -38,7 +38,7 @@ export default function ImportPage() {
             )}
           </Card>
         </div>
-        <div className="lg:col-span-2">
+        <div id="quick-add" className="lg:col-span-2 scroll-mt-8">
           <Card>
             <ManualEntryForm />
           </Card>

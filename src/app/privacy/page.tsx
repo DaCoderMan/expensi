@@ -2,8 +2,8 @@ import Card from '@/components/ui/Card';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy - Expensi',
-  description: 'Privacy Policy for Expensi, a personal expense tracking tool.',
+  title: 'Privacy Policy - Financi AI',
+  description: 'Privacy Policy for Financi AI, a personal expense tracking tool.',
 };
 
 export default function PrivacyPage() {
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       <Card className="prose prose-sm dark:prose-invert max-w-none">
         <h2>1. Data We Collect</h2>
         <p>
-          When you use Expensi, we collect:
+          When you use Financi AI, we collect:
         </p>
         <ul>
           <li><strong>Account data:</strong> Name, email, profile image (from Google or GitHub sign-in)</li>
@@ -76,7 +76,7 @@ export default function PrivacyPage() {
       </Card>
 
       <p className="text-center text-sm text-muted">
-        <Link href="/" className="underline hover:no-underline">Back to Expensi</Link>
+        <Link href="/" className="underline hover:no-underline">Back to Financi AI</Link>
       </p>
     </div>
   );

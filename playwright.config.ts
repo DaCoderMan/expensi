@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const useExistingServer = !!process.env.E2E_USE_EXISTING_SERVER;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -14,9 +16,13 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: true,
-  },
+  ...(useExistingServer
+    ? {}
+    : {
+        webServer: {
+          command: 'npm run dev',
+          url: 'http://localhost:3000',
+          reuseExistingServer: true,
+        },
+      }),
 });

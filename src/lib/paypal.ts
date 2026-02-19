@@ -3,10 +3,14 @@
  * Requires: NEXT_PUBLIC_PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_WEBHOOK_ID
  */
 
-const base =
-  process.env.PAYPAL_ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production'
-    ? 'https://api-m.paypal.com'
-    : 'https://api-m.sandbox.paypal.com';
+function getPayPalBase(): string {
+  const paymentUrl = process.env.NEXT_PUBLIC_PAYPAL_PAYMENT_URL || '';
+  if (paymentUrl.includes('sandbox.paypal.com')) return 'https://api-m.sandbox.paypal.com';
+  if (process.env.PAYPAL_ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production')
+    return 'https://api-m.paypal.com';
+  return 'https://api-m.sandbox.paypal.com';
+}
+const base = getPayPalBase();
 
 export async function getPayPalAccessToken(): Promise<string> {
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;

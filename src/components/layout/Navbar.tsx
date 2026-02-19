@@ -36,7 +36,7 @@ const navLinks = [
     ),
   },
   {
-    href: '/recommendations',
+    href: '/ai-insights',
     label: 'AI Insights',
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +75,7 @@ export default function Navbar() {
   const isPremium = isEffectivePremium(session?.user?.subscription);
 
   return (
-    <nav className="glass border-b border-border/50 sticky top-0 z-50">
+    <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-border/50 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2.5 group">
@@ -84,14 +84,14 @@ export default function Navbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <span className="text-lg font-bold gradient-text">Expensi</span>
+            <span className="text-lg font-bold gradient-text">Financi AI</span>
           </Link>
 
           <div className="flex items-center gap-0.5 sm:gap-1">
             {navLinks.map((link) => {
               const isActive =
                 link.href === '/'
-                  ? pathname === '/'
+                  ? pathname === '/' || pathname === '/dashboard'
                   : pathname.startsWith(link.href);
               return (
                 <Link
@@ -111,6 +111,22 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
+            {!session?.user && (
+              <>
+                <Link
+                  href="/auth/signin"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl text-sm font-medium text-muted hover:text-foreground hover:bg-white/60 dark:hover:bg-white/5 transition-all"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl text-sm font-medium gradient-bg text-white shadow-sm hover:opacity-90 transition-opacity"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}

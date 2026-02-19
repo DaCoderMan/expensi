@@ -1,6 +1,6 @@
 # Production Checklist
 
-Use this checklist before deploying Expensi to production.
+Use this checklist before deploying Financi AI to production.
 
 ## Environment Variables
 
@@ -25,6 +25,7 @@ Set these in your hosting provider (Vercel, etc.):
 
 - PRO upgrades use the PayPal payment button (link in the app).
 - Optional: set `NEXT_PUBLIC_PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, and `PAYPAL_WEBHOOK_ID` to verify webhooks and auto-grant PRO when PayPal sends payment/subscription events. Webhook URL: `https://yourdomain.com/api/webhooks/paypal`. Subscribe to `BILLING.SUBSCRIPTION.*` and `PAYMENT.CAPTURE.COMPLETED`.
+- Optional: `NEXT_PUBLIC_PAYPAL_PAYMENT_URL` overrides the default payment link. Leave unset for production; use a Sandbox URL for testing (no real charges).
 
 ## Middleware
 

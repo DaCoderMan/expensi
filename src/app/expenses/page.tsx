@@ -78,9 +78,14 @@ export default function ExpensesPage() {
           title="No expenses yet"
           description="Import a CSV file or add expenses manually to see your expense list."
           action={
-            <Link href="/import" className="px-6 py-2.5 gradient-bg text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-md">
-              Import Expenses
-            </Link>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Link href="/import" className="px-6 py-2.5 gradient-bg text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-md">
+                Import Expenses
+              </Link>
+              <Link href="/import#quick-add" className="px-6 py-2.5 border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors">
+                Add manually
+              </Link>
+            </div>
           }
         />
       </div>
@@ -95,6 +100,10 @@ export default function ExpensesPage() {
           <p className="text-sm text-muted mt-1">Manage and track all your transactions</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Link href="/import#quick-add" className="flex items-center gap-1.5 px-3 py-2 bg-primary-light text-primary border border-primary/30 rounded-xl text-xs font-medium hover:bg-primary-light/80 transition-colors">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            Add manually
+          </Link>
           {/* Export buttons */}
           {filteredExpenses.length > 0 && (
             <>
@@ -281,8 +290,7 @@ export default function ExpensesPage() {
                     <td className="px-4 py-3.5 text-muted whitespace-nowrap font-mono text-xs">{expense.date}</td>
                     <td className="px-4 py-3.5 font-medium text-foreground max-w-[200px] truncate">{expense.description}</td>
                     <td className="px-4 py-3.5 text-right font-semibold tabular-nums">
-                      <span className="text-muted text-xs mr-0.5">{getCurrencySymbol(expense.currency)}</span>
-                      {expense.amount.toFixed(2)}
+                      {getCurrencySymbol(expense.currency)}{expense.amount.toFixed(2)}
                       {expense.currency && expense.currency !== 'USD' && (
                         <span className="text-muted text-[10px] ml-1">{expense.currency}</span>
                       )}

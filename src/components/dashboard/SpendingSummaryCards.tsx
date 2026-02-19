@@ -49,13 +49,13 @@ const CARD_CONFIGS = [
 export default function SpendingSummaryCards() {
   const { expenses, totalSpending, expensesByCategory } = useExpenses();
 
-  const avgPerDay = expenses.length > 0
+  const uniqueDays = expenses.length > 0
     ? (() => {
         const dates = expenses.map((e) => new Date(e.date).getTime());
-        const days = Math.max(1, Math.ceil((Math.max(...dates) - Math.min(...dates)) / (1000 * 60 * 60 * 24)));
-        return totalSpending / days;
+        return Math.max(1, Math.ceil((Math.max(...dates) - Math.min(...dates)) / (1000 * 60 * 60 * 24)));
       })()
     : 0;
+  const avgPerDay = expenses.length > 0 ? totalSpending / uniqueDays : 0;
 
   const topCategory = expensesByCategory[0];
 
@@ -69,8 +69,8 @@ export default function SpendingSummaryCards() {
     {
       ...CARD_CONFIGS[1],
       label: 'Daily Average',
-      value: `$${avgPerDay.toFixed(2)}`,
-      sub: 'per day',
+      value: uniqueDays <= 1 ? 'N/A' : `$${avgPerDay.toFixed(2)}`,
+      sub: uniqueDays <= 1 ? 'Add expenses from multiple days to see average' : 'per day',
     },
     {
       ...CARD_CONFIGS[2],
@@ -91,7 +91,7 @@ export default function SpendingSummaryCards() {
       {cards.map((card, i) => (
         <div
           key={card.label}
-          className="bg-white rounded-2xl border border-border/60 p-5 shadow-sm animate-slide-up"
+          className="bg-card rounded-2xl border border-border/60 p-5 shadow-sm animate-slide-up"
           style={{ animationDelay: `${i * 0.05}s`, animationFillMode: 'backwards' }}
         >
           <div className="flex items-center gap-3 mb-3">

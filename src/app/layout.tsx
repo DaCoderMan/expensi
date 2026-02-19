@@ -16,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Expensi - Smart Expense Tracking',
+  title: 'Financi AI - Smart Expense Tracking',
   description: 'Track, categorize, and optimize your spending with AI-powered insights',
+  icons: { icon: { url: '/favicon.svg', type: 'image/svg+xml' } },
 };
 
 export default function RootLayout({

@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 export default function DashboardPage() {
   const { expenses, isHydrated } = useExpenses();
-  const { isInTrial, trialExpired, trialEndsAt } = useSubscription();
+  const { isInTrial, trialExpired, trialEndsAt, isPremium } = useSubscription();
 
   if (!isHydrated) {
     return (
@@ -25,7 +25,7 @@ export default function DashboardPage() {
   if (expenses.length === 0) {
     return (
       <EmptyState
-        title="Welcome to Expensi"
+        title="Welcome to Financi AI"
         description="Start tracking your expenses by importing a CSV file or adding them manually. Get AI-powered insights to optimize your spending."
         action={
           <Link
@@ -49,11 +49,11 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted mt-1">Your spending overview at a glance</p>
         <p className="text-xs text-muted mt-2 italic">
-          Expensi is a personal tool, not a professional accounting or financial device. Consult a professional for tax or investment advice.
+          Financi AI is a personal tool, not a professional accounting or financial device. Consult a professional for tax or investment advice.
         </p>
       </div>
 
-      {isInTrial && (
+      {isInTrial && !isPremium && (
         <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <p className="text-sm text-foreground">

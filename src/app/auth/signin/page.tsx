@@ -2,18 +2,39 @@
 
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const isDev = process.env.NODE_ENV === 'development';
 
 export default function SignInPage() {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [devEmail, setDevEmail] = useState('dev@localhost');
   const [devPassword, setDevPassword] = useState('');
+  const [emailLogin, setEmailLogin] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [registered, setRegistered] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('registered') === '1') setRegistered(true);
+  }, [searchParams]);
 
   async function handleSignIn(provider: string) {
     setIsLoading(provider);
     await signIn(provider, { callbackUrl: '/' });
+  }
+
+  async function handleEmailLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!emailLogin.trim() || !emailPassword) return;
+    setIsLoading('email-login');
+    await signIn('email-login', {
+      email: emailLogin.trim(),
+      password: emailPassword,
+      callbackUrl: '/',
+    });
+    setIsLoading(null);
   }
 
   async function handleDevSignIn(e: React.FormEvent) {
@@ -37,18 +58,23 @@ export default function SignInPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold gradient-text mb-2">Expensi</h1>
+          <h1 className="text-3xl font-bold gradient-text mb-2">Financi AI</h1>
           <p className="text-muted text-sm">Smart expense tracking with AI-powered insights</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-border/60 p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-border/60 p-8">
+          {registered && (
+            <div className="mb-6 px-4 py-3 rounded-xl bg-success-light text-success text-sm font-medium text-center">
+              Account created. Sign in below.
+            </div>
+          )}
           <h2 className="text-lg font-semibold text-foreground text-center mb-6">Sign in to continue</h2>
 
           <div className="space-y-3">
             <button
               onClick={() => handleSignIn('google')}
               disabled={isLoading !== null}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border rounded-xl text-sm font-medium text-foreground hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border rounded-xl text-sm font-medium text-foreground hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading === 'google' ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted/30 border-t-primary" />
@@ -66,7 +92,7 @@ export default function SignInPage() {
             <button
               onClick={() => handleSignIn('github')}
               disabled={isLoading !== null}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border rounded-xl text-sm font-medium text-foreground hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border rounded-xl text-sm font-medium text-foreground hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading === 'github' ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted/30 border-t-primary" />
@@ -78,6 +104,39 @@ export default function SignInPage() {
               Continue with GitHub
             </button>
           </div>
+
+          {/* Email + password login (MongoDB-backed) */}
+          <form onSubmit={handleEmailLogin} className="mt-6 pt-6 border-t border-border space-y-3">
+            <p className="text-xs font-medium text-muted uppercase tracking-wide">Email sign in</p>
+            <input
+              type="email"
+              value={emailLogin}
+              onChange={(e) => setEmailLogin(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-muted/30 dark:bg-gray-800 dark:text-foreground"
+              autoComplete="username"
+              required
+            />
+            <input
+              type="password"
+              value={emailPassword}
+              onChange={(e) => setEmailPassword(e.target.value)}
+              placeholder="Your password"
+              className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-muted/30 dark:bg-gray-800 dark:text-foreground"
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="submit"
+              disabled={isLoading !== null || !emailPassword || !emailLogin}
+              className="w-full py-2.5 rounded-xl text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isLoading === 'email-login' ? 'Signing in…' : 'Sign in with email'}
+            </button>
+            <p className="text-center">
+              <Link href="/auth/forgot-password" className="text-xs text-muted hover:text-primary">Forgot password?</Link>
+            </p>
+          </form>
 
           {isDev && (
             <form onSubmit={handleDevSignIn} className="mt-6 pt-6 border-t border-border space-y-3">
@@ -115,6 +174,10 @@ export default function SignInPage() {
             </form>
           )}
 
+          <p className="mt-4 text-center text-sm text-muted">
+            Don&apos;t have an account?{' '}
+            <Link href="/auth/register" className="text-primary font-medium hover:underline">Sign up</Link>
+          </p>
           <div className="mt-6 text-center">
             <p className="text-xs text-muted">
               By signing in, you agree to our{' '}

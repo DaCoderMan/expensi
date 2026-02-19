@@ -1,6 +1,6 @@
 import { ExpensePreset, ExpenseCategory, CurrencyCode } from '@/types';
 
-const STORAGE_KEY = 'expensi-custom-presets';
+const STORAGE_KEY = 'financiai-custom-presets';
 
 export const DEFAULT_PRESETS: ExpensePreset[] = [
   {

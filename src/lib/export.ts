@@ -172,7 +172,7 @@ export function exportToPDF(expenses: Expense[]): void {
       </tr>
     </tbody>
   </table>
-  <div class="footer">Expensi &middot; Expense Report</div>
+  <div class="footer">Financi AI &middot; Expense Report</div>
   <script>window.onload = function() { window.print(); };</script>
 </body>
 </html>`;

@@ -8,12 +8,15 @@
     "start": "next start",
     "lint": "eslint",
     "setup-env": "node scripts/setup-env.mjs",
+    "setup-paypal-sandbox": "node scripts/setup-paypal-sandbox.mjs",
     "test": "vitest",
     "test:ci": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --project=chromium",
     "test:e2e:selenium": "node e2e-selenium/run.js",
-    "test:e2e:puppeteer": "node e2e-puppeteer/run.js"
+    "test:e2e:puppeteer": "node e2e-puppeteer/run.js",
+    "test:e2e:production": "playwright test --project=chromium",
+    "test:all": "node scripts/test-all.mjs"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",
